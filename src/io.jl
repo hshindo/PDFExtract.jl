@@ -1,14 +1,18 @@
-export readpdf, readtext, readimage
+export readpdf, readtext, readimage, saveimages
 
-function readpdf(path::String, option="-text -bounding -draw -image")
-    jarpath = realpath(joinpath(dirname(@__FILE__),"../deps"))
-    jarfile = "$jarpath/pdfextract-0.1.3.jar")
+function getjar()
+    jarpath = joinpath(dirname(@__FILE__), "../deps")
+    jarfile = realpath("$jarpath/pdfextract-0.1.4.jar")
     if !isfile(jarfile)
         println("Downloading $jarfile...")
-        download("https://github.com/paperai/pdfextract/releases/download/v0.1.3/pdfextract-0.1.3.jar", jarpath)
+        download("https://github.com/paperai/pdfextract/releases/download/v0.1.4/pdfextract-0.1.4.jar", jarpath)
     end
+    jarfile
+end
 
-    pdfstr = readstring(`java -classpath $jarfile PDFExtractor $path $option`)
+function readpdf(path::String, option="-text -bounding -draw -image")
+    jar = getjar()
+    pdfstr = readstring(`java -classpath $jar PDFExtractor $path $option`)
     pdcontents = PDContent[]
     lines = split(pdfstr, "\n")
     push!(lines, "")
@@ -41,4 +45,9 @@ end
 
 function readimage(path::String)
     Vector{PDImage}(readpdf(path,"-image"))
+end
+
+function saveimages(inpath::String, outpath::String="")
+    jar = getjar()
+    run(`java -classpath $jar ImageExtractor $inpath -o $outpath`)
 end
