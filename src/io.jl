@@ -1,11 +1,11 @@
-export readpdf, readtext, readimage, saveimages
+export readpdf, readtext, readimage, extract_images
 
-function getjar()
-    jarpath = joinpath(dirname(@__FILE__), "../deps")
-    jarfile = realpath("$jarpath/pdfextract-0.1.4.jar")
+function downloadjar()
+    jarfile = realpath(joinpath(@__DIR__,"pdfextract-0.1.4.jar"))
     if !isfile(jarfile)
-        println("Downloading $jarfile...")
-        download("https://github.com/paperai/pdfextract/releases/download/v0.1.4/pdfextract-0.1.4.jar", jarpath)
+        url = "https://github.com/paperai/pdfextract/releases/download/v0.1.4/pdfextract-0.1.4.jar"
+        println("Downloading $url")
+        download(url, jarfile)
     end
     jarfile
 end
@@ -23,8 +23,8 @@ function readpdf(path::String, option="-text -bounding -draw -image")
         content = items[2]
         if content == "TEXT"
             c = items[3]
-            coords = map(i -> parse(Float64,items[i]), 4:7)
-            char = PDChar(page, c, coords...)
+            xywh = map(i -> parse(Float64,items[i]), 4:7)
+            char = PDChar(page, c, xywh...)
             push!(pdcontents, char)
         elseif content == "DRAW"
             op = items[3]
@@ -32,8 +32,8 @@ function readpdf(path::String, option="-text -bounding -draw -image")
             draw = PDDraw(page, op, coords)
             push!(pdcontents, draw)
         elseif content == "IMAGE"
-            coords = map(i -> parse(Float64,items[i]), 3:6)
-            image = PDImage(page, coords...)
+            xywh = map(i -> parse(Float64,items[i]), 3:6)
+            image = PDImage(page, xywh...)
             push!(pdcontents, image)
         end
     end
@@ -47,7 +47,10 @@ function readimage(path::String)
     Vector{PDImage}(readpdf(path,"-image"))
 end
 
-function saveimages(inpath::String, outpath::String="")
-    jar = getjar()
-    run(`java -classpath $jar ImageExtractor $inpath -o $outpath`)
+function extract_images(inpath::String; o="", dpi="")
+    jar = downloadjar()
+    command = `java -classpath $jar ImageExtractor $inpath`
+    isempty(o) || (command = `$command -o $o`)
+    isempty(dpi) || (command = `$command -dpi $dpi`)
+    run(command)
 end
