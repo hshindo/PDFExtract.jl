@@ -1,38 +1,39 @@
-export readpdf, readtext, readimage, extract_images
+export readpdf, readtext, readimage, saveimages
 
 function downloadjar()
-    jarfile = realpath(joinpath(@__DIR__,"pdfextract-0.1.4.jar"))
+    jarfile = realpath(joinpath(@__DIR__,"../deps/pdfextract-0.1.6.jar"))
     if !isfile(jarfile)
-        url = "https://github.com/paperai/pdfextract/releases/download/v0.1.4/pdfextract-0.1.4.jar"
+        url = "https://github.com/paperai/pdfextract/releases/download/v0.1.6/pdfextract-0.1.6.jar"
         println("Downloading $url")
         download(url, jarfile)
     end
     jarfile
 end
 
-function readpdf(path::String, option="-text -bounding -draw -image")
-    jar = getjar()
-    pdfstr = readstring(`java -classpath $jar PDFExtractor $path $option`)
+function readpdf(path::String; options=["-text","-bounding"])
+    jar = downloadjar()
+    pdfstr = readstring(`java -classpath $jar PDFExtractor $path $options`)
     pdcontents = PDContent[]
     lines = split(pdfstr, "\n")
     push!(lines, "")
     for line in lines
         isempty(line) && continue
         items = Vector{String}(split(line,'\t'))
-        page = parse(Int, items[1])
-        content = items[2]
+        id = parse(Int, items[1])
+        page = parse(Int, items[2])
+        content = items[3]
         if content == "TEXT"
-            c = items[3]
-            xywh = map(i -> parse(Float64,items[i]), 4:7)
-            char = PDChar(page, c, xywh...)
+            c = items[4]
+            xywh = map(i -> parse(Float64,items[i]), 5:8)
+            char = PDText(page, c, xywh...)
             push!(pdcontents, char)
         elseif content == "DRAW"
-            op = items[3]
-            coords = map(i -> parse(Float64,items[i]), 4:length(items))
-            draw = PDDraw(page, op, coords)
+            op = items[4]
+            props = map(i -> parse(Float64,items[i]), 5:length(items))
+            draw = PDDraw(page, op, props)
             push!(pdcontents, draw)
         elseif content == "IMAGE"
-            xywh = map(i -> parse(Float64,items[i]), 3:6)
+            xywh = map(i -> parse(Float64,items[i]), 4:7)
             image = PDImage(page, xywh...)
             push!(pdcontents, image)
         end
@@ -40,17 +41,10 @@ function readpdf(path::String, option="-text -bounding -draw -image")
     pdcontents
 end
 
-function readtext()
-end
+readtexts(path::String) = readpdf(path, options=["-text", "-bounding"])
 
-function readimage(path::String)
-    Vector{PDImage}(readpdf(path,"-image"))
-end
-
-function extract_images(inpath::String; o="", dpi="")
+function saveimages(inpath::String; options=[""])
     jar = downloadjar()
-    command = `java -classpath $jar ImageExtractor $inpath`
-    isempty(o) || (command = `$command -o $o`)
-    isempty(dpi) || (command = `$command -dpi $dpi`)
+    command = `java -classpath $jar ImageExtractor $inpath $options`
     run(command)
 end
