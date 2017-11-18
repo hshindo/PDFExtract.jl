@@ -2,6 +2,5 @@ docs/build/
 docs/site/
 sandbag.jl
 benchmark.jl
-*.pdf
 *.jar
 .data
