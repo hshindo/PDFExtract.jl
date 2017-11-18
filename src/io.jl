@@ -7,7 +7,6 @@ function downloadjar()
     if !isfile(jarfile)
         url = "https://github.com/paperai/pdfextract/releases/download/v0.1.6/pdfextract-0.1.6.jar"
         println("Downloading $url")
-        #download(url, jarfile)
         run(download_cmd(url, jarfile))
     end
     jarfile
