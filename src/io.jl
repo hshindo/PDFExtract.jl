@@ -1,7 +1,7 @@
 export readpdf, readtext, readimage, saveimages
 
 function downloadjar()
-    jarfile = realpath(joinpath(@__DIR__,"../deps/pdfextract-0.1.6.jar"))
+    jarfile = joinpath(@__DIR__,"../deps/pdfextract-0.1.6.jar")
     if !isfile(jarfile)
         url = "https://github.com/paperai/pdfextract/releases/download/v0.1.6/pdfextract-0.1.6.jar"
         println("Downloading $url")
