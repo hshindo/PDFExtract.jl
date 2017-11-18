@@ -22,7 +22,6 @@ addons:
         packages:
             - oracle-java8-installer
 
-
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia -e 'Pkg.clone(pwd()); Pkg.build("PDFExtract"); Pkg.test("PDFExtract"; coverage=true)'
