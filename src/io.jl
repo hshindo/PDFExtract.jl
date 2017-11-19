@@ -1,13 +1,11 @@
 export readpdf, readtext, readimage, saveimages
 
-using BinDeps
-
 function downloadjar()
     jarfile = normpath(joinpath(@__DIR__,"../deps/pdfextract-0.1.6.jar"))
     if !isfile(jarfile)
         url = "https://github.com/paperai/pdfextract/releases/download/v0.1.6/pdfextract-0.1.6.jar"
         println("Downloading $url")
-        run(download_cmd(url, jarfile))
+        download(url, jarfile)
     end
     jarfile
 end
