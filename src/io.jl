@@ -1,4 +1,4 @@
-export readpdf, readtext, readimage, saveimages
+export readpdf, readtexts, readimages, saveimages
 
 function downloadjar()
     jarfile = normpath(joinpath(@__DIR__,"../deps/pdfextract-0.1.6.jar"))
@@ -10,7 +10,7 @@ function downloadjar()
     jarfile
 end
 
-function readpdf(path::String; options=["-text","-bounding"])
+function readpdf(path::String; options=["-text","-bounding","-draw","-image"])
     jar = downloadjar()
     pdfstr = readstring(`java -classpath $jar PDFExtractor $path $options`)
     pdcontents = PDContent[]
@@ -42,9 +42,19 @@ function readpdf(path::String; options=["-text","-bounding"])
 end
 
 readtexts(path::String) = readpdf(path, options=["-text", "-bounding"])
+readimages(path::String) = readpdf(path, options=["-image"])
 
 function saveimages(inpath::String; options=[""])
     jar = downloadjar()
     command = `java -classpath $jar ImageExtractor $inpath $options`
     run(command)
+end
+
+function Base.write(path::String, contents::Vector{T}) where T<:PDContent
+    open(path, "w") do f
+        for i = 1:length(contents)
+            print(f, "$i\t")
+            println(f, string(contents[i]))
+        end
+    end
 end
