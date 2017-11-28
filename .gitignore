@@ -4,3 +4,4 @@ sandbag.jl
 benchmark.jl
 *.jar
 .data
+*.pdf

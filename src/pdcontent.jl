@@ -1,4 +1,4 @@
-export PDContent, PDChar, PDDraw, PDImage
+export PDContent, PDText, PDDraw, PDImage
 
 abstract type PDContent end
 
