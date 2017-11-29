@@ -25,16 +25,16 @@ function readpdf(path::String; options=["-text","-bounding","-draw","-image"])
         if content == "TEXT"
             c = items[4]
             xywh = map(i -> parse(Float64,items[i]), 5:8)
-            char = PDText(page, c, xywh...)
+            char = PDText(page, c, xywh..., [])
             push!(pdcontents, char)
         elseif content == "DRAW"
             op = items[4]
             props = map(i -> parse(Float64,items[i]), 5:length(items))
-            draw = PDDraw(page, op, props)
+            draw = PDDraw(page, op, props, [])
             push!(pdcontents, draw)
         elseif content == "IMAGE"
             xywh = map(i -> parse(Float64,items[i]), 4:7)
-            image = PDImage(page, xywh...)
+            image = PDImage(page, xywh..., [])
             push!(pdcontents, image)
         end
     end

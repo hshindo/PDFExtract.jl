@@ -9,17 +9,19 @@ mutable struct PDText <: PDContent
     y::Float64
     w::Float64
     h::Float64
+    tags::Vector
 end
 
-Base.string(t::PDText) = join([t.page, "TEXT", t.c, t.x, t.y, t.w, t.h], "\t")
+Base.string(t::PDText) = join([t.page, "TEXT", t.c, t.x, t.y, t.w, t.h, t.tags...], "\t")
 
 mutable struct PDDraw <: PDContent
     page::Int
     op::String
     props::Vector{Float64}
+    tags::Vector
 end
 
-Base.string(d::PDDraw) = join([d.page, "DRAW", d.op, d.props...], "\t")
+Base.string(d::PDDraw) = join([d.page, "DRAW", d.op, d.props..., d.tags...], "\t")
 
 mutable struct PDImage <: PDContent
     page::Int
@@ -27,6 +29,7 @@ mutable struct PDImage <: PDContent
     y::Float64
     w::Float64
     h::Float64
+    tags::Vector
 end
 
-Base.string(i::PDImage) = join([i.page, "IMAGE", i.x, i.y, i.w, i.h], "\t")
+Base.string(i::PDImage) = join([i.page, "IMAGE", i.x, i.y, i.w, i.h, i.tags...], "\t")
