@@ -33,3 +33,7 @@ mutable struct PDImage <: PDContent
 end
 
 Base.string(i::PDImage) = join([i.page, "IMAGE", i.x, i.y, i.w, i.h, i.tags...], "\t")
+
+function toxml(contents::Vector{T}) where T<:PDContent
+    
+end
