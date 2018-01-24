@@ -1,4 +1,4 @@
-export readpdf, readtexts, readimages, saveimages
+export readpdf, readtexts, readimages, saveimages, extract
 
 function downloadjar()
     jarfile = normpath(joinpath(@__DIR__,"../deps/pdfextract-0.1.6.jar"))
@@ -10,7 +10,7 @@ function downloadjar()
     jarfile
 end
 
-function readpdf(path::String; options=["-text","-bounding","-draw","-image"])
+function readpdf(path::String; options=["-text","-bounding","-glyph","-fontName","-draw","-image"])
     jar = downloadjar()
     pdfstr = readstring(`java -classpath $jar PDFExtractor $path $options`)
     pdcontents = PDContent[]
@@ -43,6 +43,7 @@ end
 
 readtexts(path::String) = readpdf(path, options=["-text", "-bounding"])
 readimages(path::String) = readpdf(path, options=["-image"])
+readdraws(path::String) = readpdf(path, options=["-draw"])
 
 function saveimages(inpath::String; options=[""])
     jar = downloadjar()
@@ -56,5 +57,28 @@ function Base.write(path::String, contents::Vector{T}) where T<:PDContent
             print(f, "$i\t")
             println(f, string(contents[i]))
         end
+    end
+end
+
+function extract(path::String; options=[])
+    files = String[]
+    if isfile(path)
+        @assert endswith(path,".pdf")
+        push!(files, path)
+    elseif isdir(path)
+        for file in readdir(path)
+            endswith(file,".pdf") || continue
+            println(file)
+            push!(files, joinpath(path,file))
+        end
+    end
+
+    for file in files
+        if isempty(options)
+            contents = readpdf(path)
+        else
+            contents = readpdf(path, options=options)
+        end
+        write("$path.txt", contents)
     end
 end

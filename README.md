@@ -7,7 +7,7 @@ Currently, `pdfextract-0.1.6` is supported.
 
 ## Requirements
 * java
-* julia 0.6 or later
+* julia 0.6
 
 ## Instllation
 ```julia
@@ -21,6 +21,10 @@ Pkg.add("PDFExtract")
 
 ## Functions
 * `readpdf(path::String, [options])`: read texts, draws, and images extracted from pdf.
+* `readtexts(path::String, [options])`: read texts
+* `readimages(path::String, [options])`: read images
+* `readdraws(path::String, [options])`: read draws
+* `extract(path::String, [options])`: readpdf + write
 * `saveimages(path::String, [options])`: save PNG images extracted from pdf.
 
 See [pdfextract](https://github.com/paperai/pdfextract) for details.
