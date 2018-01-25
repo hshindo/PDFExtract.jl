@@ -17,7 +17,10 @@ function readpdf(path::String; options=["-text","-bounding","-glyph","-fontName"
     lines = split(pdfstr, "\n")
     push!(lines, "")
     for line in lines
-        isempty(line) && continue
+        if isempty(line)
+            push!(pdcontents, PDEmpty())
+            continue
+        end
         items = Vector{String}(split(line,'\t'))
         id = parse(Int, items[1])
         page = parse(Int, items[2])
@@ -68,17 +71,21 @@ function extract(path::String; options=[])
     elseif isdir(path)
         for file in readdir(path)
             endswith(file,".pdf") || continue
-            println(file)
             push!(files, joinpath(path,file))
         end
     end
 
     for file in files
-        if isempty(options)
-            contents = readpdf(path)
-        else
-            contents = readpdf(path, options=options)
+        try
+            println(file)
+            if isempty(options)
+                contents = readpdf(file)
+            else
+                contents = readpdf(file, options=options)
+            end
+            write("$file.txt", contents)
+        catch
+            println("$file skipped.")
         end
-        write("$path.txt", contents)
     end
 end

@@ -1,6 +1,12 @@
-export PDContent, PDText, PDDraw, PDImage
+export PDContent, PDEmpty, PDText, PDDraw, PDImage
 
 abstract type PDContent end
+
+struct PDEmpty <: PDContent
+end
+
+Base.string(t::PDEmpty) = ""
+
 
 mutable struct PDText <: PDContent
     page::Int
@@ -14,6 +20,7 @@ end
 
 Base.string(t::PDText) = join([t.page, "TEXT", t.c, t.x, t.y, t.w, t.h, t.tags...], "\t")
 
+
 mutable struct PDDraw <: PDContent
     page::Int
     op::String
@@ -22,6 +29,7 @@ mutable struct PDDraw <: PDContent
 end
 
 Base.string(d::PDDraw) = join([d.page, "DRAW", d.op, d.props..., d.tags...], "\t")
+
 
 mutable struct PDImage <: PDContent
     page::Int
@@ -35,5 +43,5 @@ end
 Base.string(i::PDImage) = join([i.page, "IMAGE", i.x, i.y, i.w, i.h, i.tags...], "\t")
 
 function toxml(contents::Vector{T}) where T<:PDContent
-    
+
 end
