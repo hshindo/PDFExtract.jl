@@ -5,9 +5,6 @@ abstract type PDContent end
 struct PDEmpty <: PDContent
 end
 
-Base.string(t::PDEmpty) = ""
-
-
 mutable struct PDText <: PDContent
     page::Int
     c::String

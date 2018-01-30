@@ -1,9 +1,9 @@
-export readpdf, readtexts, readimages, saveimages, extract
+export readpdf, readpdftxt, readtexts, readimages, saveimages, pdfextract
 
 function downloadjar()
-    jarfile = normpath(joinpath(@__DIR__,"../deps/pdfextract-0.1.6.jar"))
+    jarfile = normpath(joinpath(@__DIR__,"../deps/pdfextract-0.2.0.jar"))
     if !isfile(jarfile)
-        url = "https://github.com/paperai/pdfextract/releases/download/v0.1.6/pdfextract-0.1.6.jar"
+        url = "https://github.com/paperai/pdfextract/releases/download/v0.2.0/pdfextract-0.2.0.jar"
         println("Downloading $url")
         download(url, jarfile)
     end
@@ -13,6 +13,12 @@ end
 function readpdf(path::String; options=["-text","-bounding","-glyph","-fontName","-draw","-image"])
     jar = downloadjar()
     pdfstr = readstring(`java -classpath $jar PDFExtractor $path $options`)
+    readpdfstr(pdfstr)
+end
+
+readpdftxt(path::String) = readpdfstring(open(readstring,path))
+
+function readpdfstr(pdfstr::String)
     pdcontents = PDContent[]
     lines = split(pdfstr, "\n")
     push!(lines, "")
@@ -56,14 +62,20 @@ end
 
 function Base.write(path::String, contents::Vector{T}) where T<:PDContent
     open(path, "w") do f
-        for i = 1:length(contents)
-            print(f, "$i\t")
-            println(f, string(contents[i]))
+        id = 1
+        for c in contents
+            if isa(c,PDEmpty)
+                println(f, "")
+            else
+                print(f, "$id\t")
+                println(f, string(c))
+                id += 1
+            end
         end
     end
 end
 
-function extract(path::String; options=[])
+function pdfextract(path::String; options=[])
     files = String[]
     if isfile(path)
         @assert endswith(path,".pdf")
