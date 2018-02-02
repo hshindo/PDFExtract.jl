@@ -1,42 +1,45 @@
+export PDFAnno, SpanAnno, RelationAnno
+export todict
+
 abstract type PDFAnno end
 
 mutable struct SpanAnno <: PDFAnno
-    id::String
     page::Int
     position::Vector{Rectangle}
     label::String
     text::String
 end
 
-function todict(span::SpanAnno)
-    Dict(
-        "type" => "span",
-        "page" => span.page,
-        "position" => map(p -> String[p.x,p.y,p.w,p.h], span.position),
-        "label" => span.label,
-        "text" => span.text
-    )
-end
-
 mutable struct RelationAnno <: PDFAnno
-    id::String
     dir::String
-    ids::Vector{String}
+    spans::Vector{SpanAnno}
     label::String
 end
 
-function todict(rel::RelationAnno)
-    Dict(
-        "dir" => rel.dir,
-        "ids" => rel.ids,
-        "label" => rel.label
-    )
-end
-
 function todict(annos::Vector{T}) where T<:PDFAnno
+    iddict = ObjectIdDict()
+    foreach(annos) do a
+        get!(iddict, a, length(iddict)+1)
+    end
+
     dict = Dict()
     for a in annos
-        dict[a.id] = todict(a)
+        id = string(iddict[a])
+        if isa(a, SpanAnno)
+            dict[id] = Dict(
+                "type" => "span",
+                "page" => a.page,
+                "position" => map(p -> [string(p.x),string(p.y),string(p.w),string(p.h)], a.position),
+                "label" => a.label,
+                "text" => a.text
+            )
+        elseif isa(a, RelationAnno)
+            dict[id] = Dict(
+                "dir" => a.dir,
+                "ids" => map(s -> string(iddict[s]), a.spans),
+                "label" => a.label
+            )
+        end
     end
     dict
 end
