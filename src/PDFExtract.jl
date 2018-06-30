@@ -1,8 +1,7 @@
 module PDFExtract
 
-include("rectangle.jl")
-include("pdfcontent.jl")
+include("pdcontent.jl")
 include("pdfanno.jl")
-include("io.jl")
+include("simsearch.jl")
 
 end

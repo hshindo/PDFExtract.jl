@@ -1,6 +1,6 @@
 docs/build/
 docs/site/
-sandbag.jl
+sandbox.jl
 benchmark.jl
 *.jar
 .data

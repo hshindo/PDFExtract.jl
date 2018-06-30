@@ -5,6 +5,8 @@ struct Rectangle
     h::Float64
 end
 
+Rectangle() = Rectangle(0.0, 0.0, 0.0, 0.0)
+
 function Rectangle(rects::Vector{Rectangle})
     minx, miny = rects[1].x, rects[1].y
     maxx, maxy = rects[1].x+rects[1].w, rects[1].y+rects[1].h
