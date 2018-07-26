@@ -1,4 +1,4 @@
-using ExXML
+using EzXML
 
 function aasearch(filename::String)
     pdf = readpdf("$filename.pdf")

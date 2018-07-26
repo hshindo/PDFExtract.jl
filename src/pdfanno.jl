@@ -10,13 +10,24 @@ mutable struct PDSpan
 end
 
 mutable struct PDRelation
-    dir::String
-    spans::Vector{PDSpan}
+    head::String
+    tail::String
     label::String
+end
+
+mutable struct PDFAnno
+    spans::Vector{PDSpan}
 end
 
 function readpdfanno(filename::String)
     dict = TOML.parsefile(filename)
-    for (k,v) in dict
+    if haskey(dict, "spans")
+        spans = map(dict["spans"]) do d
+            r = d["textrange"]
+            PDSpan(d["page"], r[1]:r[2], d["label"], d["text"])
+        end
+    else
+        spans = PDSpan[]
     end
+    PDFAnno(spans)
 end
