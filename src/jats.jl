@@ -11,10 +11,6 @@ function readjats(filepath::String)
     search!(title, pdf)
 end
 
-function search!(target::String, pdf)
-    
-end
-
 function aaa()
     nodename(xml_article) == "article" || throw("No article.")
     countelements(xml_article) < 3 && throw("#xml elements < 3")
