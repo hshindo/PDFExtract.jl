@@ -3,10 +3,12 @@ export readpdf, tokenize_space
 
 mutable struct PDChar
     page::Int
-    _type::String
     str::String
     coord::Vector{Float64}
 end
+
+istext(c::PDChar) = !isdraw(c)
+isdraw(c::PDChar) = c.str[1] == '[' && c.str[end] == ']'
 
 function Base.string(c::PDChar)
     join([t.page, t.str, t.coord...], "\t")
@@ -22,7 +24,7 @@ function PDToken(chars::Vector{PDChar})
     PDToken(chars, str)
 end
 
-function readpdf(filename::String)
+function readpdf_v024(filename::String)
     @assert endswith(filename, ".pdf")
     jar = download_jar()
     pdfstr = readstring(`java -classpath $jar PDFExtractor $filename`)
@@ -45,14 +47,27 @@ function readpdf(filename::String)
     chars
 end
 
-function readpdf_v030(filename::String)
+function readpdf(filename::String)
     @assert endswith(filename, ".pdf")
     jar = download_jar()
-    #pdfstr = readstring(`java -classpath $jar paperai.pdfextract.PDFExtractor $filename`)
-    pdfstr = readstring(`java -classpath $jar PDFExtractor $filename`)
+    pdfstr = readstring(`java -classpath $jar paperai.pdfextract.PDFExtractor $filename -glyph`)
     chars = PDChar[]
     lines = split(pdfstr, "\n")
     for line in lines
+        isempty(line) && continue
+        items = split(line, '\t')
+        page = parse(Int, items[1])
+        str = normalize_string(items[2], :NFKC)
+        coord = map(x -> parse(Float64,x), split(items[3]," "))
+        c = PDChar(page, str, coord)
+        push!(chars, c)
+    end
+    chars
+end
+
+function readpdftxt(filename::String)
+    chars = PDChar[]
+    for line in open(readlines,filename)
         isempty(line) && continue
         items = split(line, '\t')
         page = parse(Int, items[1])
@@ -99,7 +114,7 @@ function saveimages(inpath::String; options=[])
 end
 
 function download_jar()
-    version = "0.2.4"
+    version = "0.3.0"
     jarfile = normpath(joinpath(@__DIR__,"../deps/pdfextract-$version.jar"))
     if !isfile(jarfile)
         url = "https://github.com/paperai/pdfextract/releases/download/v$version/pdfextract-$version.jar"
