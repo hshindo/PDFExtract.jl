@@ -1,6 +1,8 @@
 export PDChar, PDToken
 export readpdf, tokenize_space
 
+using CodecZlib
+
 mutable struct PDChar
     page::Int
     str::String
@@ -65,9 +67,14 @@ function readpdf(filename::String)
     chars
 end
 
-function readpdftxt(filename::String)
+function readpdftxt(filepath::String)
     chars = PDChar[]
-    for line in open(readlines,filename)
+    if endswith(filepath,".gz")
+        lines = open(s -> readlines(GzipDecompressorStream(s)), path)
+    else
+        lines = open(readlines, filepath)
+    end
+    for line in lines
         isempty(line) && continue
         items = split(line, '\t')
         page = parse(Int, items[1])
