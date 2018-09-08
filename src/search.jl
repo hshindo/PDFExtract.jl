@@ -1,12 +1,4 @@
-export search!
-
-function search!(query::String, pdffile::String)
-    path = ""
-    chars = readpdftxt()
-    for char in chars
-
-    end
-end
+export PDSearch
 
 function lcs(X::String, Y::String)
     D = zeros(Int, length(X)+1, length(Y)+1)
@@ -16,7 +8,7 @@ function lcs(X::String, Y::String)
             y = Y[j]
             if i == 0 || j == 0
                 L[i,j] = 0
-            else if (X[i-1] == Y[j-1])
+            elseif (X[i-1] == Y[j-1])
                 L[i,j] = L[i-1,j-1] + 1
             else
                 L[i,j] = max(L[i-1,j], L[i,j-1])

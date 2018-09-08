@@ -1,64 +1,34 @@
-export readjats
+export jats2pdf
 
 using EzXML
 
-function readjats(filepath::String)
-    article = root(readxml(filepath))
-    nodename(article) == "article" || throw("No article.")
+function jats2pdf(jatspath::String, pdfpath::String)
+    article = root(readxml(jatspath))
+    nodename(article) == "article" || return
 
-    journal = findfirst(article, "front/journal-meta/journal-title-group/journal-title") |> nodecontent
-    title = findfirst(article, "front/article-meta/title-group/article-title") |> nodecontent
-    search!(title, pdf)
+    doc = PDDocument(readpdf(pdfpath))
+    f(xpath) = nodecontent(findfirst(xpath,article))
+    annotate!(doc, f("front/journal-meta/journal-title-group/journal-title"), "journal")
+    annotate!(doc, f("front/article-meta/title-group/article-title"), "title")
+    annotate!(doc, f("front/article-meta/abstract"), "article")
+    open("a.out","w") do f
+        println(f, string(doc))
+    end
 end
 
-function aaa()
-    nodename(xml_article) == "article" || throw("No article.")
-    countelements(xml_article) < 3 && throw("#xml elements < 3")
+using Base.Filesystem
+function mvjats(path::String)
+    for file in readdir(path)
+        endswith(file,".pdf") || continue
+        pdffile = file
+        xmlfile = file[1:end-4] * ".xml"
+        isfile(joinpath(path,xmlfile)) || continue
 
-    article = Tree("article")
-    xml_front = findfirst(xml_article, "front")
-    push!(article, parse_front(xml_front))
-
-    body = findfirst(xml_article, "body")
-    push!(article, parse_body(body))
-
-    back = find(xml_article, "back")
-    if !isempty(back)
-        push!(article, parse_back(back[1]))
+        dirpath = joinpath(path, file[1:end-4])
+        isdir(dirpath) || mkdir(dirpath)
+        mv(joinpath(path,pdffile), joinpath(dirpath,pdffile))
+        sleep(0.1)
+        mv(joinpath(path,xmlfile), joinpath(dirpath,xmlfile))
+        sleep(0.1)
     end
-
-    push!(article, Tree("floats-group"))
-    append!(article[end], findfloats(article))
-    floats = find(xml_article, "floats-group")
-    if !isempty(floats)
-        append!(article[end], parse_body(floats[1]).children)
-    end
-    isempty(article[end]) && deleteat!(article,length(article)) # no floats
-
-    maths = findall(article, "math")
-    for i = 1:length(maths)
-        math = maths[i]
-        mathml = root(parsexml(toxml(math)))
-        normalize_mathml!(mathml)
-        replace!(math, convert(Tree,mathml))
-    end
-
-    # tokenize_word!(article)
-    postprocess!(article)
-    nonrecursive!(article)
-    article
-end
-
-function align(pdftxt::String, xmlfile::String)
-    pdchars = readpdftxt(pdftxt)
-    #pdchars = filter(istext, pdchars)
-    #iddict = Dict{String,Int}()
-    #pdids = map(x -> get!(iddict,x.c,length(iddict)+1), pdchars)
-
-    xml = readjats(xmlfile)
-    xmltree = xmltree[findfirst(c -> c.name == "body", xmltree.children)]
-    tokenize!(xmltree)
-    xmlchars = findall(isempty, xmltree)
-    xmlids = map(c -> get!(iddict,string(c.name),length(iddict)+1), xmlchars)
-    pairs = lcsmatch(pdids, xmlids)
 end

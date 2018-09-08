@@ -35,10 +35,6 @@ function readpdf2(path::String)
     sents
 end
 
-function readconll(filename::String)
-    
-end
-
 function write_xhtml(filename::String, strs::Vector{String})
     strs = map(escapeHTML, strs)
     body = join(map(s -> "<p>$s</p>\n", strs))
