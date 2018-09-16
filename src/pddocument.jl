@@ -3,43 +3,60 @@ export PDDocument
 mutable struct PDDocument
     texts::Vector{PDText}
     str::String
-    spandict::Dict
+    char2text::Vector{Int}
+    spans::Vector
 end
 
 function PDDocument(texts::Vector{PDText})
     str = join(map(t -> t.str, texts))
-    PDDocument(texts, str, Dict())
+    char2text = Int[]
+    for i = 1:length(texts)
+        t = texts[i]
+        for _ = 1:sizeof(t.str)
+            push!(char2text, i)
+        end
+    end
+    PDDocument(texts, str, char2text, [])
 end
 
-function annotate!(doc::PDDocument, str::String, tag::String)
+function annotate!(doc::PDDocument, str::String, label::String)
     str = replace(str, " "=>"")
-    i = 1
-    dict = doc.spandict
+    k = 1
     while true
-        r = findnext(str, doc.str, i)
+        r = findnext(str, doc.str, k)
         r == nothing && break
-        i = last(r) + 1
-        haskey(dict,tag) || (dict[tag] = [])
-        push!(dict[tag], r)
+        i = doc.char2text[first(r)]
+        j = doc.char2text[last(r)]
+        k = last(r) + 1
+        push!(doc.spans, (i,j,label))
     end
+end
+
+function search!(src::String, query::String)
+    
 end
 
 function Base.string(doc::PDDocument)
-    lines = map(doc.texts) do t
-        [i == 1 ? string(t,delim="\t") : "O" for i=1:length(doc.spandict)+1]
+    dict = Dict()
+    spans = map(doc.spans) do (i,j,l)
+        id = get!(dict, l, length(dict)+1)
+        (i, j, l, id)
     end
-    char2index = Int[]
-    for i = 1:length(doc.texts)
-        t = doc.texts[i]
-        for _ = 1:sizeof(t.str)
-            push!(char2index, i)
+    labels = map(doc.texts) do t
+        ["O" for _ = 1:length(dict)]
+    end
+    for (i,j,l,id) in spans
+        if i == j
+            labels[i][id] = "S-$l"
+        else
+            labels[i][id] = "B-$l"
+            labels[j][id] = "E-$l"
         end
     end
-    i = 1
-    for (k,v) in doc.spandict
-        i = char2index[first(v)]
-        j = 1
-        lines[i]
-        i += 1
+    lines = map(zip(doc.texts,labels)) do (t,l)
+        strs = [t.str, string(t.page), string(t.fcoord), string(t.gcoord)]
+        append!(strs, l)
+        join(strs, "\t")
     end
+    join(lines, "\n")
 end

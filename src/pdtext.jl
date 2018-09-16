@@ -1,5 +1,5 @@
 export PDText
-export tokenize
+export readpdf, tokenize
 
 using CodecZlib
 import Base.Unicode
@@ -20,14 +20,33 @@ function PDText(children::Vector{PDText})
     PDText(str, children, children[1].page, fcoord, gcoord)
 end
 
-function readpdf(filepath::String)
-    @assert endswith(filepath, ".pdf")
-    gzfilepath = "$filepath.0-3-1.txt.gz"
-    if !isfile(gzfilepath)
-        jar = download_jar("0.3.1")
-        run(`java -classpath $jar paperai.pdfextract.PDFExtractor $filepath`)
+function leaves(text::PDText)
+    l = PDText[]
+    function f(t::PDText)
+        if isempty(t.children)
+            push!(l,t)
+        else
+            foreach(f, t.children)
+        end
     end
-    lines = open(s -> readlines(GzipDecompressorStream(s)), gzfilepath)
+    f(text)
+    l
+end
+
+function readpdf(filepath::String)
+    if endswith(filepath, ".txt")
+        lines = open(readlines, filepath)
+    elseif endswith(filepath, ".pdf")
+        gzfilepath = "$filepath.0-3-1.txt.gz"
+        if !isfile(gzfilepath)
+            jar = download_jar("0.3.1")
+            run(`java -classpath $jar paperai.pdfextract.PDFExtractor $filepath`)
+        end
+        lines = open(s -> readlines(GzipDecompressorStream(s)), gzfilepath)
+    else
+        throw("File error.")
+    end
+
     texts = PDText[]
     for line in lines
         isempty(line) && continue
@@ -44,11 +63,6 @@ function readpdf(filepath::String)
         push!(texts, t)
     end
     texts
-end
-
-function Base.string(t::PDText; delim="")
-    strs = String[t.str, string(t.page), string(t.fcoord), string(t.gcoord)]
-    join(strs, delim)
 end
 
 function tokenize(texts::Vector{PDText})
@@ -72,22 +86,6 @@ function tokenize(texts::Vector{PDText})
 end
 
 function tokenize_line(texts::Vector{PDText})
-end
-
-function make_columns(texts::Vector{PDText})
-    tokens = tokenize(texts)
-    sorted = sort(tokens, by=t->t.gcoord.x)
-    columns = [tokens[1]]
-    for i = 2:length(tokens)
-        t = sorted[i]
-        c = columns[end]
-        if t.gcoord.x <= c.gcoord.x+c.gcoord.w
-            columns[end] = PDText([c,t])
-        else
-            push!(columns, t)
-        end
-    end
-    columns
 end
 
 export average_size
