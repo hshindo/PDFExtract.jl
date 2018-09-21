@@ -14,6 +14,20 @@ function jats2pdf(path::String)
     article = root(readxml("$path.xml"))
     nodename(article) == "article" || return
 
+    texts = readpdf("$path.pdf")
+    dict = Dict()
+    textids = map(texts) do t
+        get!(dict, t.str, length(dict))
+    end
+    sa = SuffixArray(textids, length(dict))
+
+    spans = [] # (i,j,label)
+    firstcontent(xpath) = nodecontent(findfirst(xpath,article))
+    c = firstcontent("")
+    span = prefixsearch(sa, c)
+    push!(spans, (span,"journal"))
+
+    #=
     doc = PDDocument(readpdf("$path.pdf"))
     f(xpath) = nodecontent(findfirst(xpath,article))
     annotate!(doc, f("front/journal-meta/journal-title-group/journal-title"), "journal")
@@ -22,4 +36,5 @@ function jats2pdf(path::String)
     open(GzipCompressorStream,"$path.pdf.txt.gz","w") do s
         write(s, string(doc))
     end
+    =#
 end

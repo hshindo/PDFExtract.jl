@@ -32,10 +32,6 @@ function annotate!(doc::PDDocument, str::String, label::String)
     end
 end
 
-function search!(src::String, query::String)
-    
-end
-
 function Base.string(doc::PDDocument)
     dict = Dict()
     spans = map(doc.spans) do (i,j,l)

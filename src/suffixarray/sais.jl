@@ -24,9 +24,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
 =#
 
-sais(text::Vector) = sais(text, Array{Int}(undef,length(text)), 0, length(text), 65536)
-
-function sais(text::Vector{T}, sa::Vector{Int}, fs::Int, n::Int, k::Int) where T
+function sais(data::Vector, k::Int)
+    sa = Array{Int}(undef,length(data))
+    sais!(data, sa, 0, length(data), k)
+    sa
+end
+function sais!(text::Vector{T}, sa::Vector{Int}, fs::Int, n::Int, k::Int) where T<:Integer
     pidx = 0
     flags = 0
     if k <= 256
@@ -119,7 +122,7 @@ function sais(text::Vector{T}, sa::Vector{Int}, fs::Int, n::Int, k::Int) where T
             end
         end
         RA = offset_to_array(sa, m+newfs+1)
-        sais(RA, sa, newfs, m, name)
+        sais!(RA, sa, newfs, m, name)
 
         i = n
         j = 2m
@@ -186,7 +189,6 @@ function sais(text::Vector{T}, sa::Vector{Int}, fs::Int, n::Int, k::Int) where T
     #if (isbwt == false) { induceSA(T, SA, C, B, n, k); }
     #else { pidx = computeBWT(T, SA, C, B, n, k); }
     induceSA(text, sa, C, B, n, k)
-    sa+1
 end
 
 function setcounts!(text::Vector{T}, C::Vector{Int}, n::Int, k::Int) where T
