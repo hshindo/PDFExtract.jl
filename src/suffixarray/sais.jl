@@ -25,11 +25,14 @@
 =#
 
 function sais(data::Vector, k::Int)
-    sa = Array{Int}(undef,length(data))
+    sa = Array{Int}(undef, length(data))
     sais!(data, sa, 0, length(data), k)
+    @inbounds for i = 1:length(sa)
+        sa[i] += 1
+    end
     sa
 end
-function sais!(text::Vector{T}, sa::Vector{Int}, fs::Int, n::Int, k::Int) where T<:Integer
+function sais!(text::Vector{T}, sa::Vector{Int}, fs::Int, n::Int, k::Int) where T
     pidx = 0
     flags = 0
     if k <= 256
@@ -196,7 +199,7 @@ function setcounts!(text::Vector{T}, C::Vector{Int}, n::Int, k::Int) where T
         C[i] = 0
     end
     for i = 1:n
-        C[text[i]+1] += 1
+        C[Int(text[i])+1] += 1
     end
 end
 
@@ -217,7 +220,7 @@ end
 
 offset_to_array(x::Vector, i::Int) = unsafe_wrap(Array, pointer(x,i), length(x)-i+1)
 
-function LMSsort(text::Vector{T}, sa, C, B, n::Int, k::Int) where T<:Integer
+function LMSsort(text::Vector{T}, sa, C, B, n::Int, k::Int) where T
     C == B && setcounts!(text, C, n, k)
     getbuckets(C, B, k, false)
     j = n - 1

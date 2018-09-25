@@ -4,7 +4,7 @@ mutable struct PDDocument
     texts::Vector{PDText}
     str::String
     char2text::Vector{Int}
-    spans::Vector
+    annotations::Vector
 end
 
 function PDDocument(texts::Vector{PDText})
@@ -19,40 +19,43 @@ function PDDocument(texts::Vector{PDText})
     PDDocument(texts, str, char2text, [])
 end
 
-function annotate!(doc::PDDocument, str::String, label::String)
-    str = replace(str, " "=>"")
-    k = 1
-    while true
-        r = findnext(str, doc.str, k)
-        r == nothing && break
+function annotate!(doc::PDDocument, str::String, label::String, start::Int=1)
+    r = findnext(str, doc.str, start)
+    if r != nothing
         i = doc.char2text[first(r)]
         j = doc.char2text[last(r)]
-        k = last(r) + 1
-        push!(doc.spans, (i,j,label))
+        push!(doc.annotations, (i,j,label))
     end
+    r
 end
 
-function Base.string(doc::PDDocument)
+function toconll(doc::PDDocument)
     dict = Dict()
-    spans = map(doc.spans) do (i,j,l)
-        id = get!(dict, l, length(dict)+1)
-        (i, j, l, id)
+    annotations = map(doc.annotations) do (i,j,label)
+        id = get!(dict, label, length(dict)+1)
+        (i, j, label, id)
     end
     labels = map(doc.texts) do t
         ["O" for _ = 1:length(dict)]
     end
-    for (i,j,l,id) in spans
+    for (i,j,label,id) in annotations
         if i == j
-            labels[i][id] = "S-$l"
+            labels[i][id] = "S-$label"
         else
-            labels[i][id] = "B-$l"
-            labels[j][id] = "E-$l"
+            labels[i][id] = "B-$label"
+            for k = i+1:j-1
+                labels[k][id] = "I-$label"
+            end
+            labels[j][id] = "E-$label"
         end
     end
     lines = map(zip(doc.texts,labels)) do (t,l)
-        strs = [t.str, string(t.page), string(t.fcoord), string(t.gcoord)]
-        append!(strs, l)
+        strs = [t.str, string(t.page), string(t.fcoord), string(t.gcoord), l...]
         join(strs, "\t")
     end
-    join(lines, "\n")
+    collect(lines)
+end
+
+function toxml(doc::PDDocument)
+    
 end

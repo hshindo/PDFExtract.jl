@@ -71,7 +71,7 @@ function tokenize(texts::Vector{PDText})
     average = texts[1].fcoord.w
     for i = 2:length(texts)
         prev, curr = texts[i-1], texts[i]
-        expected = prev.fcoord.x + prev.fcoord.w + 0.3*average
+        expected = prev.fcoord.x + prev.fcoord.w + 0.1*average
         if prev.page != curr.page || prev.fcoord.x > curr.fcoord.x || expected < curr.fcoord.x
             push!(tokens, PDText(buffer))
             buffer = [curr]

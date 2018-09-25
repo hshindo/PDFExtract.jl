@@ -5,41 +5,61 @@ struct SuffixArray
     index::Vector{Int}
 end
 
-function SuffixArray(data::Vector, k::Int)
-    index = sais(data, k)
-    @inbounds for i = 1:length(index)
-        index[i] += 1
-    end
+function SuffixArray(str::String)
+    data = map(Int32, collect(str))
+    k = maximum(data)
+    index = sais(data, Int(k)+1)
     SuffixArray(data, index)
 end
-SuffixArray(data::Vector{UInt8}) = SuffixArray(data, 65536)
 
-function prefixsearch(sa::SuffixArray, query::Vector{T}) where T
-    l = 1
-    r = length(sa.index)
-    while l <= r
-        m = (r+l) ÷ 2
-        p = sa.index[m]
-        lcp = getlcp(sa, p, query)
-        lcp == length(query) && return p:p+lcp
-        lcp + sa.index[m] == length(sa.data) && return p:p+lcp
-        if sa.data[p+lcp] < query[lcp+1]
-            l = m + 1
-        else
-            r = m - 1
+Base.length(sa::SuffixArray) = length(sa.index)
+
+function prefixsearch(sa::SuffixArray, query::Vector{Int32})
+    ii = 1
+    ij = length(sa)
+    while true
+        ik = (ii+ij) ÷ 2
+        xi = sa.index[ik]
+
+        qi = 1
+        while sa.data[xi+qi-1] == query[qi]
+            if qi > length(query)
+                i = ik
+                while getlcp() == lcp
+                    i--
+                end
+                i = ik
+                while true
+                    i++
+                end
+                
+                for i = ik:-1:1
+                    getlcp(sa, i)
+                end
+            end
+            qi == length(query) && break
+            xi+qi-1 == length(sa) && break
+            qi += 1
         end
-        l <= r || return p:p+lcp
+        lcp = qi - 1
+        ii == ij && return xi:xi+lcp-1
+
+        if sa.data[xi+qi-1] < query[qi]
+            ii = ik + 1
+        else
+            ij = ik - 1
+        end
     end
 end
 
-function getlcp(sa::SuffixArray, pos::Int, query::Vector{T}) where T
-    i = 1
-    while sa.data[pos+i-1] == query[i]
-        i == length(query) && return i
-        pos+i-1 == length(sa.data) && return i
-        i += 1
+function getlcp(sa::SuffixArray, xi::Int, query::Vector)
+    qi = 1
+    while sa.data[xi+qi-1] == query[qi]
+        qi == length(query) && return qi
+        xi+qi-1 == length(sa) && return qi
+        qi += 1
     end
-    i-1
+    qi - 1
 end
 
 """

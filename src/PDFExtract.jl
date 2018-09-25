@@ -8,8 +8,8 @@ include("jats.jl")
 include("tex.jl")
 include("table.jl")
 
-include("suffixarray/sais.jl")
-include("suffixarray/suffixarray.jl")
+#include("suffixarray/sais.jl")
+#include("suffixarray/suffixarray.jl")
 
 function download_jar(version::String)
     jarfile = normpath(joinpath(@__DIR__,"../deps/pdfextract-$version.jar"))
