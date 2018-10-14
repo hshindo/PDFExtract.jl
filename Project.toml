@@ -1,0 +1,8 @@
+name = "PDFExtract"
+uuid = "b6bec47e-0844-5090-977a-5a6d1183f4f3"
+author = ["Hiroyuki Shindo <hshindo@outlook.com>"]
+
+[deps]
+CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
+EzXML = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"

@@ -5,3 +5,4 @@ benchmark.jl
 *.jar
 .data
 *.pdf
+Manifest.toml

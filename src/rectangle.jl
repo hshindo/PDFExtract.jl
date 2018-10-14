@@ -7,6 +7,14 @@ end
 
 Rectangle() = Rectangle(0.0, 0.0, 0.0, 0.0)
 
+function contains(r1::Rectangle, r2::Rectangle)
+    r1.x <= r2.x && r1.x+r1.w >= r2.x+r2.w && r1.y <= r2.y && r1.y+r1.h >= r2.y+r2.h
+end
+
+function overlaps(r1::Rectangle, r2::Rectangle)
+    r1.x < r2.x+r2.w && r2.x < r1.x+r1.w && r1.y < r2.y+r2.h && r2.y < r1.y+r1.h
+end
+
 function merge(rects::Vector{Rectangle})
     minx, miny = rects[1].x, rects[1].y
     maxx, maxy = rects[1].x+rects[1].w, rects[1].y+rects[1].h
@@ -18,6 +26,7 @@ function merge(rects::Vector{Rectangle})
     end
     Rectangle(minx, miny, maxx-minx, maxy-miny)
 end
+merge(rects::Rectangle...) = merge([rects...])
 
 function Base.parse(::Type{Rectangle}, s::String)
     items = Vector{String}(split(s," "))
