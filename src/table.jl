@@ -105,10 +105,6 @@ function parse_rows(texts::Vector{PDText})
     for r in rows
         sort!(r, by=t->t.fcoord.x)
     end
-    # remove header and footer
-    for i = 1:length(rows)
-        rect = merge(map(r -> r.fcoord, rows[i]))
-    end
     rows
 end
 
