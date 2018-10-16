@@ -32,6 +32,8 @@ function sais(data::Vector, k::Int)
     end
     sa
 end
+sais(data::Vector{UInt8}) = sais(data, 256)
+
 function sais!(text::Vector{T}, sa::Vector{Int}, fs::Int, n::Int, k::Int) where T
     pidx = 0
     flags = 0

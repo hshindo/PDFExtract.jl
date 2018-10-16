@@ -1,26 +1,24 @@
 export SuffixArray
 
-struct SuffixArray
-    data::Vector
+struct SuffixArray{T}
+    data::Vector{T}
     index::Vector{Int}
 end
 
 function SuffixArray(str::String)
-    data = map(Int32, collect(str))
-    k = maximum(data)
-    index = sais(data, Int(k)+1)
+    data = Vector{UInt8}(str)
+    index = sais(data)
     SuffixArray(data, index)
 end
 
-Base.length(sa::SuffixArray) = length(sa.index)
+Base.length(sa::SuffixArray) = length(sa.data)
 
-function prefixsearch(sa::SuffixArray, query::Vector{Int32})
+function prefixsearch(sa::SuffixArray{T}, query::Vector{UInt8}) where T
     ii = 1
     ij = length(sa)
     while true
         ik = (ii+ij) ÷ 2
         xi = sa.index[ik]
-
         qi = 1
         while sa.data[xi+qi-1] == query[qi]
             if qi > length(query)
@@ -32,7 +30,6 @@ function prefixsearch(sa::SuffixArray, query::Vector{Int32})
                 while true
                     i++
                 end
-                
                 for i = ik:-1:1
                     getlcp(sa, i)
                 end
@@ -51,6 +48,7 @@ function prefixsearch(sa::SuffixArray, query::Vector{Int32})
         end
     end
 end
+prefixsearch(sa::SuffixArray, query::String) = prefixsearch(sa, Vector{UInt8}(query))
 
 function getlcp(sa::SuffixArray, xi::Int, query::Vector)
     qi = 1
