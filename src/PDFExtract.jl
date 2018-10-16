@@ -1,5 +1,8 @@
 module PDFExtract
 
+include("suffixarray/sais.jl")
+include("suffixarray/suffixarray.jl")
+
 include("rectangle.jl")
 include("pdtext.jl")
 include("pddocument.jl")

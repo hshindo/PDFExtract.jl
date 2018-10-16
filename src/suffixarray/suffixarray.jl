@@ -1,4 +1,5 @@
 export SuffixArray
+export prefixsearch
 
 struct SuffixArray{T}
     data::Vector{T}
@@ -14,6 +15,26 @@ end
 Base.length(sa::SuffixArray) = length(sa.data)
 
 function prefixsearch(sa::SuffixArray{T}, query::Vector{UInt8}) where T
+    left = 1
+    right = length(sa)
+    while true
+        mid = (left+right) ÷ 2
+        xi = sa.index[mid]
+        lcp = 0
+        while sa.data[xi+lcp] == query[lcp+1]
+            lcp += 1
+            lcp == length(query) && break
+            xi+lcp == length(sa) && break
+        end
+        left == right && return lcp > 0 ? (xi:xi+lcp-1) : (0:0)
+        if sa.data[xi+lcp] < query[lcp+1]
+            left = mid + 1
+        else
+            right = mid - 1
+        end
+    end
+
+    #=
     ii = 1
     ij = length(sa)
     while true
@@ -47,6 +68,7 @@ function prefixsearch(sa::SuffixArray{T}, query::Vector{UInt8}) where T
             ij = ik - 1
         end
     end
+    =#
 end
 prefixsearch(sa::SuffixArray, query::String) = prefixsearch(sa, Vector{UInt8}(query))
 
