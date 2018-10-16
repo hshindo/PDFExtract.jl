@@ -1,85 +1,71 @@
 export SuffixArray
-export prefixsearch
 
 struct SuffixArray{T}
     data::Vector{T}
-    index::Vector{Int}
+    indexes::Vector{Int}
 end
 
 function SuffixArray(str::String)
     data = Vector{UInt8}(str)
-    index = sais(data)
-    SuffixArray(data, index)
+    indexes = sais(data)
+    SuffixArray(data, indexes)
 end
 
 Base.length(sa::SuffixArray) = length(sa.data)
 
-function prefixsearch(sa::SuffixArray{T}, query::Vector{UInt8}) where T
+function Base.findall(sa::SuffixArray{T}, query::Vector{UInt8}) where T
     left = 1
     right = length(sa)
-    while true
+    maxlcp, maxi = 0, 0
+    while left <= right
         mid = (left+right) ÷ 2
-        xi = sa.index[mid]
-        lcp = 0
-        while sa.data[xi+lcp] == query[lcp+1]
-            lcp += 1
-            lcp == length(query) && break
-            xi+lcp == length(sa) && break
+        lcp = getlcp(sa, mid, query)
+        if lcp > maxlcp
+            maxlcp = lcp
+            maxi = mid
         end
-        left == right && return lcp > 0 ? (xi:xi+lcp-1) : (0:0)
-        if sa.data[xi+lcp] < query[lcp+1]
+        lcp == length(query) && break
+
+        i = sa.indexes[mid]
+        if i+lcp-1 == length(sa) || sa.data[i+lcp] < query[1+lcp]
             left = mid + 1
         else
             right = mid - 1
         end
     end
+    maxlcp == 0 && return UnitRange{Int}[]
 
-    #=
-    ii = 1
-    ij = length(sa)
-    while true
-        ik = (ii+ij) ÷ 2
-        xi = sa.index[ik]
-        qi = 1
-        while sa.data[xi+qi-1] == query[qi]
-            if qi > length(query)
-                i = ik
-                while getlcp() == lcp
-                    i--
-                end
-                i = ik
-                while true
-                    i++
-                end
-                for i = ik:-1:1
-                    getlcp(sa, i)
-                end
-            end
-            qi == length(query) && break
-            xi+qi-1 == length(sa) && break
-            qi += 1
-        end
-        lcp = qi - 1
-        ii == ij && return xi:xi+lcp-1
-
-        if sa.data[xi+qi-1] < query[qi]
-            ii = ik + 1
-        else
-            ij = ik - 1
-        end
+    res = [sa.indexes[maxi]]
+    i = maxi - 1
+    while getlcp(sa,i,query) == maxlcp
+        push!(res, sa.indexes[i])
+        i -= 1
     end
-    =#
+    i = maxi + 1
+    while getlcp(sa,i,query) == maxlcp
+        push!(res, sa.indexes[i])
+        i += 1
+    end
+    sort!(res)
+    map(i -> i:i+maxlcp-1, res)
 end
-prefixsearch(sa::SuffixArray, query::String) = prefixsearch(sa, Vector{UInt8}(query))
+Base.findall(sa::SuffixArray, query::String) = findall(sa, Vector{UInt8}(query))
 
-function getlcp(sa::SuffixArray, xi::Int, query::Vector)
-    qi = 1
-    while sa.data[xi+qi-1] == query[qi]
-        qi == length(query) && return qi
-        xi+qi-1 == length(sa) && return qi
-        qi += 1
+function Base.findfirst(sa::SuffixArray, query)
+    res = findall(sa, query)
+    isempty(res) ? nothing : res[1]
+end
+
+function getlcp(sa::SuffixArray, i::Int, query::Vector)
+    i > length(sa) && return 0
+    index = sa.indexes[i]
+    lcp = 0
+    while sa.data[index+lcp] == query[1+lcp]
+        lcp += 1
+        lcp == length(query) && break
+        index+lcp-1 == length(sa) && break
     end
-    qi - 1
+    lcp
 end
 
 """
