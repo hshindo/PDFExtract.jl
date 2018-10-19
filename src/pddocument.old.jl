@@ -55,7 +55,3 @@ function toconll(doc::PDDocument)
     end
     collect(lines)
 end
-
-function toxml(doc::PDDocument)
-    
-end

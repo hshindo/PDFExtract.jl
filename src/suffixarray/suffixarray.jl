@@ -1,4 +1,5 @@
 export SuffixArray
+export prefixsearch
 
 struct SuffixArray{T}
     data::Vector{T}
@@ -13,7 +14,7 @@ end
 
 Base.length(sa::SuffixArray) = length(sa.data)
 
-function Base.findall(sa::SuffixArray{T}, query::Vector{UInt8}) where T
+function prefixsearch(sa::SuffixArray{T}, query::Vector{UInt8}) where T
     left = 1
     right = length(sa)
     maxlcp, maxi = 0, 0
@@ -49,12 +50,7 @@ function Base.findall(sa::SuffixArray{T}, query::Vector{UInt8}) where T
     sort!(res)
     map(i -> i:i+maxlcp-1, res)
 end
-Base.findall(sa::SuffixArray, query::String) = findall(sa, Vector{UInt8}(query))
-
-function Base.findfirst(sa::SuffixArray, query)
-    res = findall(sa, query)
-    isempty(res) ? nothing : res[1]
-end
+prefixsearch(sa::SuffixArray, query::String) = prefixsearch(sa, Vector{UInt8}(query))
 
 function getlcp(sa::SuffixArray, i::Int, query::Vector)
     i > length(sa) && return 0
@@ -66,6 +62,20 @@ function getlcp(sa::SuffixArray, i::Int, query::Vector)
         index+lcp-1 == length(sa) && break
     end
     lcp
+end
+
+mutable struct StringMatcher
+    fwd::SuffixArray
+    bwd::SuffixArray
+end
+
+function (m::StringMatcher)(query::Vector{Int})
+    r1 = prefixsearch(m.fwd, query)
+    r2 = prefixsearch(m.bwd, query)
+    isempty(r1) || isempty(r2) || return
+    length(r1[1]) < 3 || length(r2[1]) < 3 || return
+    r1[1]
+    r2[1]
 end
 
 """

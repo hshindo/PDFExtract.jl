@@ -14,11 +14,18 @@ function jats2pdf(path::String)
     xml = readxml("$path.xml")
     front = findfirst("article/front", xml)
     body = findfirst("article/body", xml)
-
     texts = readpdf("$path.pdf")
     texts = tokenize(texts)
-    doc = PDDocument(texts)
-    function f(xpath, node, label)
+    doc = Document(texts)
+
+    annos = []
+    function find(xpath, node, label)
+        nodes = findall(xpath, node)
+        for n in nodes
+            r = find(doc, nodecontent(n))
+            push!(annos, (r,label))
+        end
+
         nodes = findall(xpath, node)
         s = 1
         for n in nodes
