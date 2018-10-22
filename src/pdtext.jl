@@ -17,7 +17,7 @@ function PDText(children::Vector{PDText})
     str = join(map(c -> c.str, children))
     fcoord = merge(map(c -> c.fcoord, children))
     gcoord = merge(map(c -> c.gcoord, children))
-    PDText(str, children, children[1].page, fcoord, gcoord)
+    PDText(str, children[1].page, fcoord, gcoord)
 end
 
 Base.string(t::PDText) = t.str
