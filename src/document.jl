@@ -4,7 +4,39 @@ mutable struct Document
     char2text::Vector{Int}
 end
 
-function Document()
+function Document(filepath::String)
+    if endswith(filepath, ".txt")
+        lines = open(readlines, filepath)
+    elseif endswith(filepath, ".pdf")
+        gzfilepath = "$filepath.0-3-1.txt.gz"
+        if !isfile(gzfilepath)
+            jar = download_jar("0.3.1")
+            run(`java -classpath $jar paperai.pdfextract.PDFExtractor $filepath`)
+        end
+        lines = open(s -> readlines(GzipDecompressorStream(s)), gzfilepath)
+    else
+        throw("File error.")
+    end
+
+    texts = PDText[]
+    for line in lines
+        isempty(line) && continue
+        items = split(line, '\t')
+        page = parse(Int, items[1])
+        str = Unicode.normalize(items[2], :NFKC)
+        str[1] == '[' && str[end] == ']' && continue
+
+        coord = map(x -> parse(Float64,x), split(items[3]," "))
+        fcoord = Rectangle(coord...)
+        coord = map(x -> parse(Float64,x), split(items[4]," "))
+        gcoord = Rectangle(coord...)
+        t = PDText(str, PDText[], page, fcoord, gcoord)
+        push!(texts, t)
+    end
+    Document(texts)
+end
+
+function Document(texts::Vector{PDText})
     str = join(map(t -> t.str, texts))
     char2text = Int[]
     for i = 1:length(texts)
@@ -14,15 +46,6 @@ function Document()
         end
     end
     Document(texts, str, char2text)
-end
-
-function Base.findall(doc::Document, query::String, start::Int=1)
-    q = replace(query, " "=>"")
-    r1 = findnext(q[1:10], doc.str, start)
-    r1 == nothing && return
-    r2 = findnext(q[end-9:end], doc.str, start)
-    r2 == nothing && return
-    
 end
 
 function toconll(doc::Document, annos::Vector)

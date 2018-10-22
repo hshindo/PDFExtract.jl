@@ -14,9 +14,10 @@ function jats2pdf(path::String)
     xml = readxml("$path.xml")
     front = findfirst("article/front", xml)
     body = findfirst("article/body", xml)
-    texts = readpdf("$path.pdf")
-    texts = tokenize(texts)
-    doc = Document(texts)
+    pdtexts = readpdf("$path.pdf")
+    words = towords(pdtexts)
+    lines = tolines(pdtexts)
+    scripts = map(addscripts, lines)
 
     annos = []
     function find(xpath, node, label)
@@ -35,9 +36,9 @@ function jats2pdf(path::String)
         end
     end
     #f("front/journal-meta/journal-title-group/journal-title", "journal")
-    f("article-meta/title-group/article-title", front, "title")
-    f("article-meta/abstract", front, "abstract")
-    f("sec/title", body, "section")
+    #find("article-meta/title-group/article-title", front, "title")
+    #find("article-meta/abstract", front, "abstract")
+    #find("sec/title", body, "section")
 
     open(GzipCompressorStream,"$path.pdf.txt.gz","w") do io
         lines = toconll(doc)

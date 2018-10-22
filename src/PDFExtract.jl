@@ -3,10 +3,11 @@ module PDFExtract
 include("suffixarray/sais.jl")
 include("suffixarray/suffixarray.jl")
 
-include("rectangle.jl")
-include("pdtext.jl")
-include("pddocument.jl")
+include("stringmatch.jl")
 
+include("rectangle.jl")
+include("treenode.jl")
+include("pdtext.jl")
 include("jats.jl")
 include("tex.jl")
 include("table.jl")

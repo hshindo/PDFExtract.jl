@@ -64,20 +64,6 @@ function getlcp(sa::SuffixArray, i::Int, query::Vector)
     lcp
 end
 
-mutable struct StringMatcher
-    fwd::SuffixArray
-    bwd::SuffixArray
-end
-
-function (m::StringMatcher)(query::Vector{Int})
-    r1 = prefixsearch(m.fwd, query)
-    r2 = prefixsearch(m.bwd, query)
-    isempty(r1) || isempty(r2) || return
-    length(r1[1]) < 3 || length(r2[1]) < 3 || return
-    r1[1]
-    r2[1]
-end
-
 """
     lcparray
 

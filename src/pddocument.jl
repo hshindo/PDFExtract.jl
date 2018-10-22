@@ -1,6 +1,9 @@
 export PDDocument
 
 mutable struct PDDocument
+    tokens::Vector{PDText}
+    lines::Vector{PDText}
+
     texts::Vector{PDText}
     str::String
     char2text::Vector{Int}
