@@ -15,31 +15,45 @@ function jats2pdf(path::String)
     front = findfirst("article/front", xml)
     body = findfirst("article/body", xml)
     pdtexts = readpdf("$path.pdf")
-    words = towords(pdtexts)
-    lines = tolines(pdtexts)
-    scripts = map(addscripts, lines)
+    chars = map(TreeNode, pdtexts)
+    words = segment_words(chars)
+    lines = segment_lines(words)
+    root = TreeNode("article", lines)
 
-    annos = []
-    function find(xpath, node, label)
-        nodes = findall(xpath, node)
-        for n in nodes
-            r = find(doc, nodecontent(n))
-            push!(annos, (r,label))
-        end
-
-        nodes = findall(xpath, node)
-        s = 1
-        for n in nodes
-            str = replace(nodecontent(n), " " => "")
-            r = annotate!(doc, str, label, s)
-            r == nothing || (s = last(r)+1)
+    str = join(map(c -> c.value.str, chars))
+    str2char = TreeNode[]
+    for c in chars
+        for _ = 1:sizeof(c.value.str)
+            push!(str2char, c)
         end
     end
-    #f("front/journal-meta/journal-title-group/journal-title", "journal")
+    sm = StringMatch(str)
+
+    node = findfirst("article-meta/title-group/article-title", front)
+    node = findfirst("article-meta/abstract", front)
+    query = replace(nodecontent(node), " "=>"")
+    approxsearch(sm, query)
+
+    #r = approxsearch(query)
+    #nodes = char2str[r]
+    #insert!("article-title", nodes)
+
+    return
+
+    for i = 1:length(words)-1
+        push!(words[i], TreeNode(" "))
+    end
+    foreach(remove!, words)
+    #foreach(remove!, lines)
+    writexml("out.xml", root)
+
+    # "front/journal-meta/journal-title-group/journal-title", "journal"
     #find("article-meta/title-group/article-title", front, "title")
     #find("article-meta/abstract", front, "abstract")
     #find("sec/title", body, "section")
+end
 
+function conllout()
     open(GzipCompressorStream,"$path.pdf.txt.gz","w") do io
         lines = toconll(doc)
         for line in lines

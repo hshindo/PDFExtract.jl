@@ -7,6 +7,15 @@ end
 
 Rectangle() = Rectangle(0.0, 0.0, 0.0, 0.0)
 
+function Base.parse(::Type{Rectangle}, s::String)
+    items = Vector{String}(split(s," "))
+    @assert length(items) == 4
+    xywh = map(x -> parse(Float64,x), items)
+    Rectangle(xywh...)
+end
+
+Base.string(r::Rectangle) = join([r.x,r.y,r.w,r.h], " ")
+
 function contains(r1::Rectangle, r2::Rectangle)
     r1.x <= r2.x && r1.x+r1.w >= r2.x+r2.w && r1.y <= r2.y && r1.y+r1.h >= r2.y+r2.h
 end
@@ -27,12 +36,3 @@ function merge(rects::Vector{Rectangle})
     Rectangle(minx, miny, maxx-minx, maxy-miny)
 end
 merge(rects::Rectangle...) = merge([rects...])
-
-function Base.parse(::Type{Rectangle}, s::String)
-    items = Vector{String}(split(s," "))
-    @assert length(items) == 4
-    xywh = map(x -> parse(Float64,x), items)
-    Rectangle(xywh...)
-end
-
-Base.string(r::Rectangle) = join([r.x,r.y,r.w,r.h], " ")

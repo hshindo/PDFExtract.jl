@@ -11,13 +11,13 @@ mutable struct PDText
     gcoord::Rectangle
 end
 
-function PDText(children::Vector{PDText})
-    @assert !isempty(children)
-    @assert all(c -> c.page == children[1].page, children)
-    str = join(map(c -> c.str, children))
-    fcoord = merge(map(c -> c.fcoord, children))
-    gcoord = merge(map(c -> c.gcoord, children))
-    PDText(str, children[1].page, fcoord, gcoord)
+function PDText(texts::Vector{PDText})
+    @assert !isempty(texts)
+    @assert all(t -> t.page == texts[1].page, texts)
+    str = join(map(t -> t.str, texts))
+    fcoord = merge(map(t -> t.fcoord, texts))
+    gcoord = merge(map(t -> t.gcoord, texts))
+    PDText(str, texts[1].page, fcoord, gcoord)
 end
 
 Base.string(t::PDText) = t.str
@@ -48,22 +48,86 @@ function readpdf(filepath::String)
         fcoord = Rectangle(coord...)
         coord = map(x -> parse(Float64,x), split(items[4]," "))
         gcoord = Rectangle(coord...)
-        t = PDText(str, PDText[], page, fcoord, gcoord)
+        t = PDText(str, page, fcoord, gcoord)
         push!(texts, t)
     end
     texts
 end
 
-function towords(texts::Vector{PDText})
-    tokens = PDText[]
+function segment_words(chars::Vector{TreeNode})
+    words = TreeNode[]
+    buffer = [chars[1]]
+    average = chars[1].value.fcoord.w
+    for i = 2:length(chars)
+        prev, curr = chars[i-1].value, chars[i].value
+        expected = prev.fcoord.x + prev.fcoord.w + 0.3*average
+        if prev.page != curr.page || prev.fcoord.x > curr.fcoord.x || expected < curr.fcoord.x
+            w = PDText(map(x -> x.value, buffer))
+            push!(words, TreeNode(w,buffer))
+            buffer = [chars[i]]
+            average = curr.fcoord.w
+        else
+            push!(buffer, chars[i])
+            average = (average + curr.fcoord.w) / 2
+        end
+    end
+    if !isempty(buffer)
+        w = PDText(map(x -> x.value, buffer))
+        push!(words, TreeNode(w,buffer))
+    end
+    words
+end
+
+function segment_lines(words::Vector{TreeNode})
+    lines = TreeNode[]
+    buffer = [words[1]]
+    for i = 2:length(words)
+        word = words[i]
+        prev = buffer[end].value
+        curr = word.value
+        if prev.page != curr.page || (prev.gcoord.y-prev.gcoord.h) > curr.gcoord.y || (curr.gcoord.y-curr.gcoord.h) > prev.gcoord.y
+            push!(lines, TreeNode("line",buffer))
+            buffer = [word]
+        else
+            push!(buffer, word)
+        end
+    end
+    isempty(buffer) || push!(lines,TreeNode("line",buffer))
+    lines
+end
+
+function addscripts!(line::TreeNode)
+    chars = leaves(line)
+    prev = chars[1].value
+    for i = 2:length(chars)
+        c = chars[i]
+        curr = c.value
+        if curr.fcoord.y < prev.fcoord.y - 1
+            i = parentindex(c)
+            p = c.parent
+            deleteat!(p, i)
+            insert!(p, i, TreeNode("sup",c))
+        elseif curr.fcoord.y > prev.fcoord.y + 1
+            i = parentindex(c)
+            p = c.parent
+            deleteat!(p, i)
+            insert!(p, i, TreeNode("sub",c))
+        else
+            prev = curr
+        end
+    end
+end
+
+#=
+function segment_words(texts::Vector{PDText})
+    words = Vector{PDText}[]
     buffer = [texts[1]]
     average = texts[1].fcoord.w
     for i = 2:length(texts)
         prev, curr = texts[i-1], texts[i]
         expected = prev.fcoord.x + prev.fcoord.w + 0.3*average
         if prev.page != curr.page || prev.fcoord.x > curr.fcoord.x || expected < curr.fcoord.x
-            node = Tree(PDText(buffer), buffer)
-            push!(tokens, PDText(buffer))
+            push!(words, buffer)
             buffer = [curr]
             average = curr.fcoord.w
         else
@@ -71,57 +135,24 @@ function towords(texts::Vector{PDText})
             average = (average + curr.fcoord.w) / 2
         end
     end
-    isempty(buffer) || push!(tokens,PDText(buffer))
-    tokens
+    isempty(buffer) || push!(words,buffer)
+    words
 end
 
-function tolines(texts::Vector{PDText})
-    lines = PDText[]
+function segment_lines(texts::Vector{PDText})
+    lines = Vector{PDText}[]
     buffer = [texts[1]]
     for i = 2:length(texts)
         t = texts[i]
         prev, curr = texts[i-1], texts[i]
         if prev.page != curr.page || prev.fcoord.x >= curr.fcoord.x
-            push!(lines, PDText(buffer))
+            push!(lines, buffer)
             buffer = [curr]
         else
             push!(buffer, curr)
         end
     end
-    isempty(buffer) || push!(lines,PDText(buffer))
+    isempty(buffer) || push!(lines,buffer)
     lines
 end
-
-function addscripts(line::Vector{PDText})
-    dict = Dict()
-    for t in line
-        y = t.fcoord.y
-        haskey(dict,y) ? (dict[y] += 1) : (dict[y] = 1)
-    end
-    maxy, maxc = 0.0, 0
-    for (y,c) in dict
-        c <= maxc && continue
-        maxy = y
-        maxc = c
-    end
-    for i = 1:length(line)
-        y = line[i].fcoord.y
-        y == maxy && continue
-        tag = y < maxy ? "sub" : "sup"
-        line[i] = PDText(tag, [line[i]])
-    end
-    line
-end
-
-function leaves(text::PDText)
-    l = PDText[]
-    function f(t::PDText)
-        if isempty(t.children)
-            push!(l,t)
-        else
-            foreach(f, t.children)
-        end
-    end
-    f(text)
-    l
-end
+=#

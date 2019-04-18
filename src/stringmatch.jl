@@ -1,44 +1,57 @@
 mutable struct StringMatch
-    n::Int
-    feats::Dict
+    sa1::SuffixArray
+    sa2::SuffixArray
 end
 
-function (sm::StringMatch)(query::String)
+function StringMatch(data::String)
+    sa1 = SuffixArray(data)
+    sa2 = SuffixArray(reverse(data))
+    StringMatch(sa1, sa2)
+end
+
+function approxsearch(sm::StringMatch, query::String)
     rs1 = prefixsearch(sm.sa1, query)
     isempty(rs1) && return
     rs2 = prefixsearch(sm.sa2, reverse(query))
     isempty(rs2) && return
+    rs2 = map(rs2) do r
+        n = length(sm.sa2)
+        (n-last(r)+1):(n-first(r)+1)
+    end
+    println(rs1)
+    println(rs2)
 end
 
-function similarity(s1::String, s2::String)
-    dict = Dict{String,Int}()
+function cossimilarity(s1::String, s2::String, n::Int)
+    dict1 = Dict()
     i = 1
-    while i <= sizeof(s1)
-        s = join(s1[i:nextind(s1,i,2)])
-        i = nextind(s1, i)
+    s = s1
+    while i <= sizeof(s)
+        j = nextind(s, i, n-1)
+        j <= sizeof(s) || break
+        ngram = s[i:j]
+        haskey(dict1,ngram) ? (dict1[ngram] += 1) : (dict1[ngram] = 1)
+        i = nextind(s, i)
     end
-    for s in s1
-        haskey(dict,s) ? (dict[s] += 1) : (dict[s] = 1)
-    end
-    for s in s2
-        haskey(dict,s) ? (dict[s] -= 1) : (dict[s] = -1)
-    end
-    c = count(c -> c == 0, collect(values(dict)))
-    p = c / length(s1)
-    r = c / length(s2)
-    2p*r / (p+r)
-end
+    a1 = sqrt(sum(c -> c*c, values(dict1)))
 
-function similarity(s1::Vector{String}, s2::Vector{String})
-    dict = Dict{String,Int}()
-    for s in s1
-        haskey(dict,s) ? (dict[s] += 1) : (dict[s] = 1)
+    dict2 = Dict()
+    i = 1
+    s = s2
+    while i <= sizeof(s)
+        j = nextind(s, i, n-1)
+        j <= sizeof(s) || break
+        ngram = s[i:j]
+        haskey(dict2,ngram) ? (dict2[ngram] += 1) : (dict2[ngram] = 1)
+        i = nextind(s, i)
     end
-    for s in s2
-        haskey(dict,s) ? (dict[s] -= 1) : (dict[s] = -1)
+    a2 = sqrt(sum(c -> c*c, values(dict2)))
+
+    dot = 0
+    for (k,v) in dict1
+        if haskey(dict2, k)
+            dot += v * dict2[k]
+        end
     end
-    c = count(c -> c == 0, collect(values(dict)))
-    p = c / length(s1)
-    r = c / length(s2)
-    2p*r / (p+r)
+    dot / (a1*a2)
 end
